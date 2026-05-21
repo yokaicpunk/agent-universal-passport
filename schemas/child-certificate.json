@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/yokaicpunk/agent-universal-passport/schemas/child-certificate.json",
+  "title": "Child Authorization Certificate",
+  "description": "A certificate issued by the parent wallet authorizing a child agent.",
+  "type": "object",
+  "required": ["version", "parentId", "childId", "childSessionPubKey", "issuedAt", "expiresAt", "parentSignature"],
+  "properties": {
+    "version": { "type": "string", "enum": ["1.0"] },
+    "parentId": { "type": "string", "description": "Parent's AUP DID, e.g. 'did:aup:0xabc...'" },
+    "childId": { "type": "string", "description": "Unique child instance ID" },
+    "childSessionPubKey": { "type": "string", "description": "Child's ephemeral public key" },
+    "inheritedSkills": { "type": "array", "items": { "type": "string" } },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "allowedEndpoints": { "type": "array", "items": { "type": "string" } },
+        "allowedSkills": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "parentSignature": { "type": "string", "description": "ECDSA signature by parent wallet" }
+  }
+}

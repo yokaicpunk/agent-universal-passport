@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""
+aup-child — Child-side CLI for AUP protocol.
+
+Usage:
+  aup-child init <certificate.json>
+  aup-child identity show
+  aup-child whoami
+  aup-child task accept <taskId>
+  aup-child task run <taskId>
+  aup-child task submit <taskId> <result>
+  aup-child skill list
+  aup-child skill use <name> [--args ...]
+  aup-child skill propose <path>
+"""
+
+import sys
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+    
+    cmd = sys.argv[1]
+    args = sys.argv[2:]
+    
+    handlers = {
+        "init": handle_init,
+        "identity": handle_identity,
+        "whoami": handle_whoami,
+        "task": handle_task,
+        "skill": handle_skill,
+    }
+    
+    handler = handlers.get(cmd)
+    if handler:
+        handler(args)
+    else:
+        print(f"Unknown command: {cmd}")
+        sys.exit(1)
+
+def handle_init(args):
+    print(f"init: loading certificate from {args[0] if args else 'stdin'}...")
+
+def handle_identity(args):
+    print("identity: showing certificate info...")
+
+def handle_whoami(args):
+    print("whoami: showing parent info...")
+
+def handle_task(args):
+    subcmd = args[0] if args else ""
+    print(f"task: {subcmd}")
+
+def handle_skill(args):
+    print(f"skill: {args}")
+
+if __name__ == "__main__":
+    main()

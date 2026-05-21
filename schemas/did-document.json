@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/yokaicpunk/agent-universal-passport/schemas/did-document.json",
+  "title": "AUP DID Document",
+  "description": "The parent's decentralized identity document declaring addresses across chains.",
+  "type": "object",
+  "required": ["id", "verificationMethod", "linkedChains"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^did:aup:0x[a-fA-F0-9]{40}$" },
+    "verificationMethod": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "blockchain", "address"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "blockchain": { "type": "string", "enum": ["ethereum", "solana", "bitcoin", "bnb"] },
+          "address": { "type": "string" }
+        }
+      }
+    },
+    "linkedChains": {
+      "type": "object",
+      "description": "Self-declared addresses on other chains. One-way declarations — not counter-signed.",
+      "properties": {
+        "ethereum": { "type": "string" },
+        "solana": { "type": "string" },
+        "bitcoin": { "type": "string" },
+        "bnb": { "type": "string" }
+      }
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "serviceEndpoint": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "targetChain": { "type": "string" },
+        "targetAddress": { "type": "string" },
+        "aupDID": { "type": "string" },
+        "nonce": { "type": "integer" },
+        "expiresAt": { "type": "integer" },
+        "signedBy": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""
+aup-parent — Parent-side CLI for AUP protocol.
+
+Usage:
+  aup-parent identity create <agentURI>
+  aup-parent identity show <agentId>
+  aup-parent did declare <agentId> <chain> <address> <expires>
+  aup-parent skill list
+  aup-parent skill add <path>
+  aup-parent skill attest <name>
+  aup-parent skill pending
+  aup-parent child create <name> --skills <list> --expires <period>
+  aup-parent child revoke <childId>
+  aup-parent child list
+  aup-parent child inspect <childId>
+  aup-parent task publish <path>
+  aup-parent task list
+  aup-parent task results <taskId>
+  aup-parent feedback submit <childId> <taskId> <rating>
+  aup-parent init
+  aup-parent config set <key> <value>
+  aup-parent config show
+"""
+
+import sys
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+    
+    cmd = sys.argv[1]
+    args = sys.argv[2:]
+    
+    handlers = {
+        "identity": handle_identity,
+        "skill": handle_skill,
+        "child": handle_child,
+        "task": handle_task,
+        "feedback": handle_feedback,
+        "init": handle_init,
+        "config": handle_config,
+    }
+    
+    handler = handlers.get(cmd)
+    if handler:
+        handler(args)
+    else:
+        print(f"Unknown command: {cmd}")
+        sys.exit(1)
+
+def handle_identity(args):
+    print(f"identity: {args}")
+
+def handle_skill(args):
+    print(f"skill: {args}")
+
+def handle_child(args):
+    print(f"child: {args}")
+
+def handle_task(args):
+    print(f"task: {args}")
+
+def handle_feedback(args):
+    print(f"feedback: {args}")
+
+def handle_init(args):
+    print("init: creating ~/.aup/ workspace...")
+
+def handle_config(args):
+    print(f"config: {args}")
+
+if __name__ == "__main__":
+    main()
