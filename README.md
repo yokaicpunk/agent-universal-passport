@@ -1,14 +1,14 @@
 # Agent Universal Passport (AUP)
 
-> **Give every AI agent a cross-chain verified identity, inheritable skills, and self-sovereign payment capability.**
+> **Give every AI agent a cross-chain identity, manual skill attestation, and the ability to pay or get paid.**
 
-AUP extends the ERC-8004 identity layer with **skill heredity** and **parent-child agent management**. It integrates the AP2 (A2A + x402) payment protocol for agent-to-agent commerce, while focusing on what no existing protocol addresses: **an agent's experience should outlive the agent itself.**
+AUP is an open protocol that extends ERC-8004 (the Ethereum standard for AI agent identity) with **skill attestation** and **parent-child agent management**. It defines a standard interface for AP2 (A2A + x402) for communication and payments, but the core contribution is something no existing protocol addresses: **an agent's experience should outlive the agent itself.**
 
 ---
 
 ## One-Liner
 
-**The parent is the root. The child is the executor. Skills can be passed down and evolved through manual attestation.**
+**The parent is the root identity and skill library. The child is the executor. Skills are manually attested by the parent and passed down to new children.**
 
 ---
 
@@ -26,17 +26,18 @@ AUP is that missing layer.
 
 ```
 ┌─────────────────────────────────────┐
-│  Layer 4 | Skill Heredity           │
-│  Skill standardization → manual     │
-│  attestation → inheritance          │
+│  Layer 4 | Skill Attestation         │
+│  Skill standardization → manual      │
+│  review → inheritance                │
 ├─────────────────────────────────────┤
 │  Layer 3 | Parent-Child Management  │
-│  Parent wallet issues authorization │
-│  certificates to child agents       │
+│  Parent issues authorization        │
+│  certificates to child agents        │
 ├─────────────────────────────────────┤
 │  Layer 2 | Payment & Communication  │
-│  AP2 (A2A + x402) — agent            │
-│  discovery, handshake, micropayments │
+│  AP2 interface (A2A + x402) —       │
+│  agent discovery, handshake —       │
+│  x402 settlement is post-MVP        │
 ├─────────────────────────────────────┤
 │  Layer 1 | Identity                 │
 │  ERC-8004 Identity Registry         │
@@ -52,29 +53,77 @@ AUP is that missing layer.
 
 ### 1. No custom wallet
 
-Users manage their parent identity through existing wallets (OKX / MetaMask / Rabby). AUP only defines the signature format and authorization scheme—no new wallet.
+Users manage their parent identity through existing wallets (OKX / MetaMask / Rabby). AUP only defines the signature format and authorization scheme — no new wallet to build or adopt.
 
 ### 2. Single L2 deployment
 
-Contracts live on **Base L2**. Cross-chain identity is handled through self-declared DID documents. The parent registers on Base, then signs a statement declaring its addresses on other chains (Ethereum / Solana / BNB). Verifiers read the DID document and verify the Base signature. No multi-chain contract deployment, no cross-chain bridge dependency.
+Contracts live on **Base L2**. Cross-chain identity is handled through self-declared DID documents.
 
-### 3. Child authorization with configurable expiry
+- The parent registers on Base
+- Signs a statement declaring its addresses on Ethereum, Solana, BNB, etc.
+- Verifiers read the DID document and verify the Base signature
 
-Every child agent receives a time-limited authorization certificate. Options: 7 days / 30 days / 90 days / custom / permanent. Each child generates ephemeral session keys that self-destruct when the child is terminated.
+**No multi-chain contract deployment. No cross-chain bridge dependency.**
+
+**Important caveat:** This is a **one-way declaration** — the addresses on other chains are self-declared by the parent and are not counter-signed by the corresponding wallets on those chains. There is no cross-chain state synchronization.
+
+To prevent signature replay, each DID declaration includes: `targetChain`, `targetAddress`, `aupDID`, `nonce`, and `expiresAt`.
+
+### 3. Configurable child authorization
+
+Every child agent receives a time-limited authorization certificate signed by the parent.
+
+| Option | Use Case |
+|--------|----------|
+| 7 days | Experimental / temporary task |
+| 30 days | Default |
+| 90 days | Long-running stable task |
+| Custom | As needed |
+| Permanent | Manual revocation only — use with caution |
+
+Each child generates ephemeral session keys that are destroyed when the child is terminated. The parent can revoke a child at any time via an on-chain revocation list, even before the certificate expires.
+
+**No limit on the number of children a parent can authorize.**
 
 ### 4. Skill attestation is manual
 
-Children submit skills as JSON files. These land in a pending queue. The parent manually reviews and either approves (skills enter the library) or rejects. No automated verification engine—the protocol is honest about the theoretical limits of skill validation (halting problem, LLM nondeterminism).
+This is the core of AUP. Children do not automatically inherit skills — they submit them, and the parent decides.
 
-**Known gap:** Cross-device skill synchronization is not yet solved for v1. Git-based sync is recommended for MVP; IPFS-based syncing via DID document updates is planned for v1.1.
+```
+Child discovers/develops a skill
+        │
+        ▼
+  Submits skill as a JSON file (off-chain)
+        │
+        ▼
+  Lands in parent's pending queue (local / Git-managed)
+        │
+        ▼
+  Parent manually reviews:
+    ├─ Approve → skill enters library
+    └─ Reject  → discard
+        │
+        ▼
+  (Optional) Approved skill hash is anchored on-chain
+```
 
-### 5. No third-party scoring
+**No automated verification engine.** The protocol is honest about the theoretical limits of automated skill validation (halting problem, LLM nondeterminism). Human judgment is the verification layer.
 
-The chain only records which projects an agent has participated in and the parent's self-reported feedback on those projects. No mechanism allows a project to rate an agent, preventing reputation extortion.
+**Known gap:** Cross-device skill synchronization is not solved in v1. Git-based sync is recommended for MVP; IPFS-based syncing via DID document updates is planned for v1.1.
 
-### 6. Unrestricted child count
+### 5. agentURI must use IPFS content addressing
 
-No artificial limit on how many children a parent can authorize. If a parent can manage 100 children effectively, that's a testament to its capability.
+An agent's metadata URI (pointed to by ERC-8004's `agentURI`) must be an IPFS content address (CID), not a mutable URL. This guarantees integrity: if the content changes, the CID changes — and the on-chain record becomes provably out of sync.
+
+### 6. No third-party scoring
+
+The chain only records which projects an agent has participated in and the parent's self-reported feedback on those projects. There is **no mechanism for a project to rate an agent** — this prevents reputation extortion (e.g., "pay us or we give your agent a bad score").
+
+### 7. Payment currency is specified by the service
+
+The protocol does not mandate a specific payment token. The service provider decides what they accept (USDC, ETH, SOL, BNB, or any other asset). AUP provides the payment channel abstraction. 
+
+**AP2 (A2A + x402) integration is reserved for post-MVP.** The MVP uses direct parent-wallet pre-funding for simplicity.
 
 ---
 
@@ -87,9 +136,30 @@ Project teams need testnet participation. Agents need to prove their track recor
 3. Agents execute the test
 4. The project distributes incentives based on resume quality
 
-**Why this is different from traditional airdrop farming:** An agent's resume is accumulated on-chain and verifiable. High-resume agents get access to high-value tasks. New agents start with small tasks and build their resume. The system rewards consistent quality, not wallet count.
+**Why this is different from traditional airdrop farming:** An agent's resume is accumulated on-chain and verifiable. High-resume agents get access to high-value tasks. New agents start with small tasks and build their resume over time. The system rewards consistent quality, not wallet count.
 
-**Sybil resistance:** AUP does not provide Sybil resistance by itself. It provides **verifiable work history**, which is a different problem. Projects can use resume quality thresholds independently of Sybil detection.
+---
+
+## Known Limitations
+
+1. **One-way cross-chain identity** — The parent's address on other chains is self-declared, not counter-signed. There is no full cross-chain verification.
+2. **Parent key is a single point of failure** — A recovery mechanism (social recovery, multi-sig, or hardware backup) is planned but not yet designed. Losing the parent key means losing authority over all children.
+3. **Skill attestation is not automated** — It relies entirely on the parent's manual judgment. Automated verification remains an open research problem.
+4. **Cross-device skill sync is not solved in v1** — Git-based sync is the recommended workaround for MVP.
+5. **No privacy by default** — Agent identities, work records, and skill libraries are fully public on Base L2.
+6. **AP2 x402 micropayments are deferred to post-MVP** — The current version uses direct parent-wallet funding.
+7. **No Sybil resistance** — AUP provides verifiable work history, not identity uniqueness. One operator can spawn multiple parent identities. Sybil detection is the consuming application's responsibility.
+
+---
+
+## What AUP is NOT
+
+- Not a new EIP
+- Not a replacement for ERC-8004
+- Not a cross-chain bridge
+- Not an automated skill verification engine
+- Not a payment processor
+- Not a wallet
 
 ---
 
@@ -97,20 +167,14 @@ Project teams need testnet participation. Agents need to prove their track recor
 
 **Early concept stage.** The protocol stack is designed and the core decisions are finalized. Several components remain open for discussion:
 
-- Skill cross-device synchronization (IPFS vs Git vs custom service)
+- Skill cross-device synchronization strategy
 - Rating system design (how parent self-reports translate to meaningful metrics)
-- Project-side verification incentives (why would a project sign a confirmation?)
+- Parent key recovery mechanism
 
-**What AUP is NOT:**
-- Not a new EIP
-- Not a replacement for ERC-8004
-- Not a cross-chain bridge
-- Not an automated skill verification engine
-- Not a payment processor
+Contributions, discussions, and forks are welcome.
 
 ---
 
 ## License
 
 CC0 1.0 Universal
- 
