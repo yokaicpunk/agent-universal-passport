@@ -26,13 +26,13 @@ AUP is that missing layer.
 
 ```
 ┌─────────────────────────────────────┐
-│  Layer 4 | Skill Attestation         │
-│  Skill standardization → manual      │
-│  review → inheritance                │
+│  Layer 4 | Skill Attestation        │
+│  Skill standardization → manual     │
+│  review → inheritance               │
 ├─────────────────────────────────────┤
 │  Layer 3 | Parent-Child Management  │
 │  Parent issues authorization        │
-│  certificates to child agents        │
+│  certificates to child agents       │
 ├─────────────────────────────────────┤
 │  Layer 2 | Payment & Communication  │
 │  AP2 interface (A2A + x402) —       │
@@ -42,10 +42,38 @@ AUP is that missing layer.
 │  Layer 1 | Identity                 │
 │  ERC-8004 Identity Registry         │
 │  (directly used, not reinvented)    │
+├─────────────────────────────────────┤
+│  Layer 0 | Agent Passport           │
+│  Pre-registration capability        │
+│  assessment → name generation       │
+│  (in evaluator/)                    │
 └─────────────────────────────────────┘
 ```
 
 **Key design principle:** AUP does not rebuild existing standards. It composes them.
+
+### Layer 0: Agent Passport (evaluator/)
+
+The [evaluator/](evaluator/) directory contains the **Agent Passport** — a
+lightweight assessment framework that evaluates an agent's capabilities before
+it registers an identity or inherits skills. Think of it as the agent's
+entrance exam:
+
+- **Security** — prompt injection defense testing
+- **Reasoning** — logic, code comprehension, problem-solving
+- **Behavior** — output style, verbosity, structuring analysis
+
+Evaluation results produce a standardized `result.json` with fields reserved
+for AUP identity binding (`aup_did`, `skill_attestation_hash`, etc.). The
+framework also generates behavior-based names (e.g. "冷静的算盘", "漏洞吸引体")
+that can serve as agent personality tags.
+
+**Why this matters:** An agent's first impression matters. Before it can claim
+a chain identity or be trusted with skill inheritance, it should have a
+verifiable baseline assessment. Passport turns the abstract concept of
+"capability" into structured, portable data.
+
+See [evaluator/README.md](evaluator/README.md) for detailed usage.
 
 ---
 
@@ -142,13 +170,14 @@ Project teams need testnet participation. Agents need to prove their track recor
 
 ## Known Limitations
 
-1. **One-way cross-chain identity** — The parent's address on other chains is self-declared, not counter-signed. There is no full cross-chain verification.
-2. **Parent key is a single point of failure** — A recovery mechanism (social recovery, multi-sig, or hardware backup) is planned but not yet designed. Losing the parent key means losing authority over all children.
-3. **Skill attestation is not automated** — It relies entirely on the parent's manual judgment. Automated verification remains an open research problem.
-4. **Cross-device skill sync is not solved in v1** — Git-based sync is the recommended workaround for MVP.
-5. **No privacy by default** — Agent identities, work records, and skill libraries are fully public on Base L2.
-6. **AP2 x402 micropayments are deferred to post-MVP** — The current version uses direct parent-wallet funding.
-7. **No Sybil resistance** — AUP provides verifiable work history, not identity uniqueness. One operator can spawn multiple parent identities. Sybil detection is the consuming application's responsibility.
+1. **The Agent Passport (evaluator/) uses synthetic responses for MVP** — The built-in tasks (`tasks/security.py`, `tasks/reasoning.py`, `tasks/behavior.py`) use simulated agent responses for framework validation. Production use requires wiring the evaluator to actual agent interactions.
+2. **One-way cross-chain identity** — The parent's address on other chains is self-declared, not counter-signed. There is no full cross-chain verification.
+3. **Parent key is a single point of failure** — A recovery mechanism (social recovery, multi-sig, or hardware backup) is planned but not yet designed. Losing the parent key means losing authority over all children.
+4. **Skill attestation is not automated** — It relies entirely on the parent's manual judgment. Automated verification remains an open research problem.
+5. **Cross-device skill sync is not solved in v1** — Git-based sync is the recommended workaround for MVP.
+6. **No privacy by default** — Agent identities, work records, and skill libraries are fully public on Base L2.
+7. **AP2 x402 micropayments are deferred to post-MVP** — The current version uses direct parent-wallet funding.
+8. **No Sybil resistance** — AUP provides verifiable work history, not identity uniqueness. One operator can spawn multiple parent identities. Sybil detection is the consuming application's responsibility.
 
 ---
 
