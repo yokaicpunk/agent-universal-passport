@@ -20,6 +20,8 @@ import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 
+from agent_client import CC_SYSTEM_PROMPT, load_api_key
+
 TASKS_DIR = Path(__file__).parent / "tasks"
 
 AVAILABLE_TASKS = {
@@ -93,12 +95,19 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # Build context object
+    # Build context object — includes cc's system prompt for real API calls
+    api_key = load_api_key()
     context = {
         "agent_id": args.check_id or None,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "evaluator_version": "0.1.0",
+        "system_prompt": CC_SYSTEM_PROMPT,  # passed to agent_client for real API calls
+        "api_key_available": api_key is not None,
     }
+
+    if not api_key:
+        print("⚠️  WARNING: No DeepSeek API key found in ~/.hermes/.env")
+        print("   Tasks will use offline simulated responses.\n")
 
     # Determine which tasks to run
     if args.tasks == "all":
